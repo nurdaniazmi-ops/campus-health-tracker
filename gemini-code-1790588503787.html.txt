@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Campus Health Tracker</title>
+  <style>
+    :root {
+      --bg-color: #e0f2fe;
+      --card-bg: #ffffff;
+      --primary: #0284c7;
+      --primary-hover: #0369a1;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --border: #bae6fd;
+      --accent: #38bdf8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    header {
+      background-color: #f0f9ff;
+      border-bottom: 2px solid var(--border);
+      padding: 1.5rem;
+      text-align: center;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+    }
+
+    header h1 {
+      color: var(--primary);
+      font-size: 1.8rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .api-key-container {
+      max-width: 500px;
+      margin: 0.5rem auto 0 auto;
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .api-key-container input {
+      flex: 1;
+      padding: 0.4rem 0.8rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.9rem;
+    }
+
+    nav {
+      display: flex;
+      justify-content: center;
+      background-color: #ffffff;
+      border-bottom: 1px solid var(--border);
+      overflow-x: auto;
+    }
+
+    nav button {
+      background: none;
+      border: none;
+      padding: 1rem 1.2rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    nav button.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+    }
+
+    main {
+      flex: 1;
+      max-width: 800px;
+      width: 100%;
+      margin: 1.5rem auto;
+      padding: 0 1rem;
+    }
+
+    .section {
+      display: none;
+      background: var(--card-bg);
+      padding: 1.5rem;
+      border-radius: 12px;
+      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);
+      border: 1px solid var(--border);
+    }
+
+    .section.active {
+      display: block;
+    }
+
+    h2 {
+      color: var(--primary);
+      margin-bottom: 1.2rem;
+      font-size: 1.4rem;
+      border-bottom: 2px solid var(--bg-color);
+      padding-bottom: 0.4rem;
+    }
+
+    .form-group {
+      margin-bottom: 1.2rem;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.4rem;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    input[type="text"], input[type="number"], select {
+      width: 100%;
+      padding: 0.6rem 0.8rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 1rem;
+      outline: none;
+    }
+
+    input[type="text"]:focus, input[type="number"]:focus, select:focus {
+      border-color: var(--primary);
+    }
+
+    .meal-checklist {
+      display: grid;
+      gap: 0.8rem;
+      margin-top: 0.5rem;
+    }
+
+    .meal-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.8rem;
+      background: #f8fafc;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+
+    .water-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.8rem;
+      margin-top: 0.5rem;
+    }
+
+    .glass {
+      width: 45px;
+      height: 60px;
+      border: 3px solid var(--primary);
+      border-top: none;
+      border-radius: 0 0 8px 8px;
+      cursor: pointer;
+      position: relative;
+      background: #f0f9ff;
+      overflow: hidden;
+      transition: transform 0.1s;
+    }
+
+    .glass.filled::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      top: 20%;
+      background-color: var(--accent);
+    }
+
+    .stair-card {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      background: #f8fafc;
+    }
+
+    .stair-counter {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-top: 0.5rem;
+    }
+
+    .btn-counter {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 1px solid var(--primary);
+      background: #fff;
+      color: var(--primary);
+      font-weight: bold;
+      font-size: 1.2rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn-counter:hover {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .btn-action {
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      padding: 0.7rem 1.2rem;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-action:hover {
+      background-color: var(--primary-hover);
+    }
+
+    .question-block {
+      margin-bottom: 1.2rem;
+      padding-bottom: 0.8rem;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .emoji-rating {
+      display: flex;
+      gap: 0.8rem;
+      margin-top: 0.4rem;
+    }
+
+    .emoji-btn {
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 0.3rem 0.6rem;
+      border-radius: 8px;
+      border: 2px solid transparent;
+      background: #f1f5f9;
+      transition: all 0.2s;
+    }
+
+    .emoji-btn.selected {
+      border-color: var(--primary);
+      background: var(--bg-color);
+      transform: scale(1.1);
+    }
+
+    #ppg-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    video {
+      width: 200px;
+      height: 200px;
+      object-fit: cover;
+      border-radius: 50%;
+      border: 4px solid var(--primary);
+    }
+
+    .ekg-display {
+      background: #000;
+      border-radius: 8px;
+      padding: 1rem;
+      position: relative;
+      text-align: center;
+    }
+
+    canvas#ekgCanvas {
+      width: 100%;
+      height: 120px;
+      display: block;
+    }
+
+    .bpm-overlay {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #00ff66;
+      font-size: 2.5rem;
+      font-weight: bold;
+      text-shadow: 0 0 10px #00ff66;
+    }
+
+    .overview-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .metric-card {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+      text-align: center;
+    }
+
+    .metric-card h4 {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 0.3rem;
+    }
+
+    .metric-card p {
+      font-size: 1.4rem;
+      font-weight: bold;
+      color: var(--primary);
+    }
+
+    .score-circle {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: conic-gradient(var(--primary) calc(var(--score) * 1%), #e2e8f0 0);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 1rem auto;
+      position: relative;
+    }
+
+    .score-circle::before {
+      content: '';
+      position: absolute;
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      background: white;
+    }
+
+    .score-text {
+      position: relative;
+      font-size: 1.8rem;
+      font-weight: bold;
+      color: var(--primary);
+    }
+
+    .recommendations-box {
+      background: #f0f9ff;
+      border-left: 4px solid var(--primary);
+      padding: 1rem;
+      border-radius: 0 8px 8px 0;
+      margin-top: 1rem;
+      white-space: pre-wrap;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Campus Health Tracker</h1>
+    <div class="api-key-container">
+      <input type="password" id="apiKeyInput" placeholder="Enter Gemini API Key here...">
+    </div>
+  </header>
+
+  <nav>
+    <button class="nav-btn active" onclick="switchSection(1)">Health Input</button>
+    <button class="nav-btn" onclick="switchSection(2)">Stair Location</button>
+    <button class="nav-btn" onclick="switchSection(3)">Measure Pulse</button>
+    <button class="nav-btn" onclick="switchSection(4)">Stress Level</button>
+    <button class="nav-btn" onclick="switchSection(5)">Health Overview</button>
+  </nav>
+
+  <main>
+    <!-- Section 1: User Info & Health Input -->
+    <div id="section1" class="section active">
+      <h2>1. Personal Profile & Daily Intake</h2>
+      
+      <div class="form-group">
+        <label>Nickname</label>
+        <input type="text" id="nickname" placeholder="Enter your nickname">
+      </div>
+
+      <div class="form-group">
+        <label>Gender</label>
+        <select id="gender">
+          <option value="FEMALE">Female</option>
+          <option value="MALE">Male</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Height (cm)</label>
+        <input type="number" id="height" value="160" onchange="calculateBMI()">
+      </div>
+
+      <div class="form-group">
+        <label>Weight (kg)</label>
+        <input type="number" id="weight" value="55" onchange="calculateBMI()">
+      </div>
+
+      <div class="form-group">
+        <label>Calculated BMI: <span id="bmiDisplay">--</span></label>
+      </div>
+
+      <h3>Today's Fixed Meals</h3>
+      <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">
+        Menu automatically selected for Day <span id="currentDayVal"></span> of month. Uncheck skipped meals.
+      </p>
+      <div class="meal-checklist" id="mealChecklist"></div>
+
+      <h3 style="margin-top: 1.2rem;">Additional Snacks</h3>
+      <div class="form-group" style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+        <input type="text" id="snackInput" placeholder="e.g., 1 slice of chocolate cake">
+        <button class="btn-action" onclick="addSnackWithAI()">Add Snack</button>
+      </div>
+      <div id="snackList" style="font-size: 0.9rem; margin-bottom: 1rem;"></div>
+
+      <h3>Water Intake (250ml per glass)</h3>
+      <div class="water-container" id="waterContainer"></div>
+    </div>
+
+    <!-- Section 2: Stair Location -->
+    <div id="section2" class="section">
+      <h2>2. Stair Activity Tracking</h2>
+      <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+        Select stairs climbed and increase count for each trip made.
+      </p>
+
+      <h3>Campus Tested Stairs</h3>
+      <div id="testedStairs"></div>
+
+      <h3>Generic Campus Stairs</h3>
+      <div id="genericStairs"></div>
+    </div>
+
+    <!-- Section 3: Measure Pulse -->
+    <div id="section3" class="section">
+      <h2>3. Camera Pulse Measurement (PPG)</h2>
+      <div id="ppg-container">
+        <p style="font-size: 0.85rem; color: var(--text-muted); text-align: center;">
+          Place your fingertip gently over the camera lens. Ensure flashlight turns on or you are in light.
+        </p>
+        <video id="video" autoplay playsinline muted></video>
+        <button class="btn-action" id="startPpgBtn" onclick="togglePPG()">Start Measurement</button>
+        <p id="ppgStatus" style="font-weight: 600; color: var(--primary);"></p>
+      </div>
+    </div>
+
+    <!-- Section 4: Stress Level -->
+    <div id="section4" class="section">
+      <h2>4. Stress Level Assessment</h2>
+      <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+        Rate from 1 (Very Stressed 😫) to 5 (Calm 😌).
+      </p>
+      
+      <div class="question-block" id="q1">
+        <label>1. How calm or relaxed have you felt over the past few days?</label>
+        <div class="emoji-rating"></div>
+      </div>
+      <div class="question-block" id="q2">
+        <label>2. How relaxed does your body feel (e.g., shoulders, jaw, stomach)?</label>
+        <div class="emoji-rating"></div>
+      </div>
+      <div class="question-block" id="q3">
+        <label>3. How manageable does your current workload or daily responsibilities feel?</label>
+        <div class="emoji-rating"></div>
+      </div>
+      <div class="question-block" id="q4">
+        <label>4. How restful and uninterrupted was your sleep last night?</label>
+        <div class="emoji-rating"></div>
+      </div>
+      <div class="question-block" id="q5">
+        <label>5. How optimistic or relaxed do you feel when thinking about the upcoming week?</label>
+        <div class="emoji-rating"></div>
+      </div>
+    </div>
+
+    <!-- Section 5: Health Overview -->
+    <div id="section5" class="section">
+      <h2>5. Comprehensive Health Overview</h2>
+
+      <div class="score-circle" id="scoreCircle" style="--score: 0;">
+        <span class="score-text" id="scoreValue">0</span>
+      </div>
+
+      <div class="ekg-display">
+        <canvas id="ekgCanvas"></canvas>
+        <div class="bpm-overlay"><span id="ekgBpm">--</span> <span style="font-size: 1rem;">BPM</span></div>
+      </div>
+
+      <div class="overview-grid" style="margin-top: 1rem;">
+        <div class="metric-card">
+          <h4>Dietary Balance</h4>
+          <p id="ovDiet">0 kcal</p>
+        </div>
+        <div class="metric-card">
+          <h4>BMI Status</h4>
+          <p id="ovBMI">--</p>
+        </div>
+        <div class="metric-card">
+          <h4>Hydration</h4>
+          <p id="ovHydration">0 / 2000 ml</p>
+        </div>
+        <div class="metric-card">
+          <h4>Calories Burned</h4>
+          <p id="ovBurned">0 kcal</p>
+        </div>
+        <div class="metric-card">
+          <h4>Stress Index</h4>
+          <p id="ovStress">-- / 5</p>
+        </div>
+      </div>
+
+      <h3>AI Personalized Recommendations</h3>
+      <button class="btn-action" style="width: 100%; margin-top: 0.5rem;" onclick="generateAIRecommendations()">
+        Generate AI Advice
+      </button>
+      <div class="recommendations-box" id="recommendationsOutput">
+        Click the button above to generate live personalized recommendations...
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // --- DATASETS ---
+
+    // 31-Day Menu Database
+    const menuData = {
+      1: { breakfast: 365, morningTea: 386, lunch: 650, dinner: 635, supper: 510 },
+      2: { breakfast: 450, morningTea: 250, lunch: 710, dinner: 625, supper: 315 },
+      3: { breakfast: 605, morningTea: 170, lunch: 935, dinner: 505, supper: 320 },
+      4: { breakfast: 500, morningTea: 340, lunch: 590, dinner: 630, supper: 395 },
+      5: { breakfast: 470, morningTea: 386, lunch: 755, dinner: 570, supper: 270 },
+      6: { breakfast: 550, morningTea: 340, lunch: 675, dinner: 595, supper: 406 },
+      7: { breakfast: 325, morningTea: 180, lunch: 825, dinner: 730, supper: 396 },
+      8: { breakfast: 580, morningTea: 330, lunch: 590, dinner: 595, supper: 250 },
+      9: { breakfast: 450, morningTea: 406, lunch: 715, dinner: 495, supper: 340 },
+      10: { breakfast: 505, morningTea: 180, lunch: 740, dinner: 625, supper: 360 },
+      11: { breakfast: 420, morningTea: 360, lunch: 735, dinner: 575, supper: 315 },
+      12: { breakfast: 391, morningTea: 440, lunch: 580, dinner: 740, supper: 235 },
+      13: { breakfast: 485, morningTea: 300, lunch: 650, dinner: 560, supper: 410 },
+      14: { breakfast: 400, morningTea: 490, lunch: 580, dinner: 620, supper: 336 },
+      15: { breakfast: 325, morningTea: 320, lunch: 770, dinner: 565, supper: 280 },
+      16: { breakfast: 416, morningTea: 365, lunch: 760, dinner: 530, supper: 300 },
+      17: { breakfast: 520, morningTea: 420, lunch: 605, dinner: 650, supper: 260 },
+      18: { breakfast: 330, morningTea: 396, lunch: 685, dinner: 630, supper: 340 },
+      19: { breakfast: 355, morningTea: 270, lunch: 980, dinner: 625, supper: 310 },
+      20: { breakfast: 470, morningTea: 306, lunch: 735, dinner: 625, supper: 340 },
+      21: { breakfast: 650, morningTea: 420, lunch: 635, dinner: 480, supper: 310 },
+      22: { breakfast: 365, morningTea: 341, lunch: 745, dinner: 635, supper: 320 },
+      23: { breakfast: 310, morningTea: 450, lunch: 580, dinner: 680, supper: 370 },
+      24: { breakfast: 375, morningTea: 406, lunch: 915, dinner: 550, supper: 320 },
+      25: { breakfast: 476, morningTea: 330, lunch: 655, dinner: 540, supper: 510 },
+      26: { breakfast: 470, morningTea: 460, lunch: 735, dinner: 575, supper: 226 },
+      27: { breakfast: 440, morningTea: 360, lunch: 715, dinner: 685, supper: 300 },
+      28: { breakfast: 345, morningTea: 340, lunch: 600, dinner: 740, supper: 430 },
+      29: { breakfast: 365, morningTea: 386, lunch: 650, dinner: 635, supper: 510 },
+      30: { breakfast: 450, morningTea: 250, lunch: 710, dinner: 625, supper: 315 },
+      31: { breakfast: 605, morningTea: 170, lunch: 935, dinner: 505, supper: 320 }
+    };
+
+    // Tested Stairs Location Data
+    // Thermochemistry Conversion: 1 kJ = 0.239006 kcal
+    const testedStairsData = [
+      { id: 't1', name: 'Tangga Menuju Menara Gading', type: 1, category: 'Mild', angle: 7.26, energyKj: 0.016, energyKcal: 0.016 * 0.239 },
+      { id: 't2', name: 'Tangga ke Dewan Mawar', type: 2, category: 'Moderate', angle: 26.57, energyKj: 0.018, energyKcal: 0.018 * 0.239 },
+      { id: 't3', name: 'Tangga café ke Dewan Melati', type: 3, category: 'Vigorous', angle: 29.44, energyKj: 0.020, energyKcal: 0.020 * 0.239 }
+    ];
+
+    const genericStairsData = [
+      { id: 'g1', name: 'Generic Stair A (Low Incline)', type: 1, category: 'Mild', angle: 10, energyKcal: 0.016 * 0.239 },
+      { id: 'g2', name: 'Generic Stair B (Medium Incline)', type: 2, category: 'Moderate', angle: 25, energyKcal: 0.018 * 0.239 },
+      { id: 'g3', name: 'Generic Stair C (Steep Incline)', type: 3, category: 'Vigorous', angle: 35, energyKcal: 0.020 * 0.239 }
+    ];
+
+    // --- APP STATE ---
+    let appState = {
+      dayOfMonth: new Date().getDate(),
+      meals: { breakfast: true, morningTea: true, lunch: true, dinner: true, supper: true },
+      addedSnacks: [],
+      glassesDrunk: 0,
+      stairCounts: {},
+      pulseRate: 72,
+      stressScores: [3, 3, 3, 3, 3]
+    };
+
+    // --- INITIALIZATION ---
+    window.onload = () => {
+      document.getElementById('currentDayVal').innerText = appState.dayOfMonth;
+      calculateBMI();
+      renderMeals();
+      renderWater();
+      renderStairs();
+      renderStressQuestions();
+      initEKGCanvas();
+    };
+
+    function switchSection(id) {
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById(`section${id}`).classList.add('active');
+      document.querySelectorAll('.nav-btn')[id - 1].classList.add('active');
+
+      if (id === 5) {
+        calculateOverallHealth();
+      }
+    }
+
+    // --- SECTION 1: BMI & DIET ---
+    function calculateBMI() {
+      const h = parseFloat(document.getElementById('height').value) / 100;
+      const w = parseFloat(document.getElementById('weight').value);
+      if (h > 0 && w > 0) {
+        const bmi = (w / (h * h)).toFixed(1);
+        document.getElementById('bmiDisplay').innerText = `${bmi}`;
+        return parseFloat(bmi);
+      }
+      return 21.0;
+    }
+
+    function renderMeals() {
+      const dayMenu = menuData[appState.dayOfMonth] || menuData[1];
+      const container = document.getElementById('mealChecklist');
+      container.innerHTML = '';
+
+      const labels = {
+        breakfast: 'Sarapan Pagi',
+        morningTea: 'Minum Pagi',
+        lunch: 'Makan Tengah Hari',
+        dinner: 'Makan Malam',
+        supper: 'Minum Malam'
+      };
+
+      for (let key in dayMenu) {
+        const item = document.createElement('div');
+        item.className = 'meal-item';
+        item.innerHTML = `
+          <span><strong>${labels[key]}</strong> (${dayMenu[key]} kcal)</span>
+          <input type="checkbox" ${appState.meals[key] ? 'checked' : ''} onchange="toggleMeal('${key}', this.checked)">
+        `;
+        container.appendChild(item);
+      }
+    }
+
+    function toggleMeal(key, checked) {
+      appState.meals[key] = checked;
+    }
+
+    function renderWater() {
+      const container = document.getElementById('waterContainer');
+      container.innerHTML = '';
+      for (let i = 0; i < 8; i++) {
+        const glass = document.createElement('div');
+        glass.className = `glass ${i < appState.glassesDrunk ? 'filled' : ''}`;
+        glass.onclick = () => {
+          appState.glassesDrunk = (appState.glassesDrunk === i + 1) ? i : i + 1;
+          renderWater();
+        };
+        container.appendChild(glass);
+      }
+    }
+
+    async function addSnackWithAI() {
+      const snackText = document.getElementById('snackInput').value.trim();
+      const apiKey = document.getElementById('apiKeyInput').value.trim();
+      if (!snackText) return;
+
+      let estCalories = 150; // Fallback default estimate
+
+      if (apiKey) {
+        try {
+          const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: `Estimate calorie for this snack: "${snackText}". Return ONLY an integer digit number of calories.` }] }]
+            })
+          });
+          const data = await res.json();
+          const text = data.candidates[0].content.parts[0].text;
+          const match = text.match(/\d+/);
+          if (match) estCalories = parseInt(match[0]);
+        } catch (e) {
+          console.error("AI Snack estimation failed, using standard default.", e);
+        }
+      }
+
+      appState.addedSnacks.push({ name: snackText, kcal: estCalories });
+      document.getElementById('snackInput').value = '';
+      renderSnacks();
+    }
+
+    function renderSnacks() {
+      const list = document.getElementById('snackList');
+      list.innerHTML = appState.addedSnacks.map(s => `<div>• ${s.name}: <strong>+${s.kcal} kcal</strong></div>`).join('');
+    }
+
+    // --- SECTION 2: STAIRS ---
+    function renderStairs() {
+      const tContainer = document.getElementById('testedStairs');
+      const gContainer = document.getElementById('genericStairs');
+      
+      tContainer.innerHTML = testedStairsData.map(s => createStairCard(s)).join('');
+      gContainer.innerHTML = genericStairsData.map(s => createStairCard(s)).join('');
+    }
+
+    function createStairCard(stair) {
+      const count = appState.stairCounts[stair.id] || 0;
+      return `
+        <div class="stair-card">
+          <strong>${stair.name}</strong> 
+          <span style="font-size:0.8rem; color:var(--text-muted);">(Type ${stair.type} - ${stair.category}, Angle: ${stair.angle}°)</span>
+          <div class="stair-counter">
+            <button class="btn-counter" onclick="adjustStairCount('${stair.id}', -1)">-</button>
+            <span style="font-weight:bold; font-size:1.1rem;">${count}</span>
+            <button class="btn-counter" onclick="adjustStairCount('${stair.id}', 1)">+</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function adjustStairCount(id, delta) {
+      const cur = appState.stairCounts[id] || 0;
+      appState.stairCounts[id] = Math.max(0, cur + delta);
+      renderStairs();
+    }
+
+    // --- SECTION 3: PPG PULSE RATE MEASUREMENT ---
+    let videoStream = null;
+    let ppgInterval = null;
+
+    async function togglePPG() {
+      const btn = document.getElementById('startPpgBtn');
+      const status = document.getElementById('ppgStatus');
+
+      if (videoStream) {
+        clearInterval(ppgInterval);
+        videoStream.getTracks().forEach(track => track.stop());
+        videoStream = null;
+        btn.innerText = "Start Measurement";
+        status.innerText = `Measurement Saved: ${appState.pulseRate} BPM`;
+        return;
+      }
+
+      try {
+        videoStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'environment', torch: true }
+        });
+        const video = document.getElementById('video');
+        video.srcObject = videoStream;
+        btn.innerText = "Stop Measurement";
+        status.innerText = "Measuring... Hold finger still.";
+
+        // Real PPG frame red-channel intensity extraction logic
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        let frames = [];
+
+        ppgInterval = setInterval(() => {
+          if (video.videoWidth > 0) {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            ctx.drawImage(video, 0, 0);
+            const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            let redSum = 0;
+            for (let i = 0; i < imgData.data.length; i += 16) {
+              redSum += imgData.data[i];
+            }
+            frames.push(redSum);
+            if (frames.length > 100) frames.shift();
+
+            // Calculate peaks for PPG pulse
+            if (frames.length >= 60) {
+              let peaks = 0;
+              for (let i = 1; i < frames.length - 1; i++) {
+                if (frames[i] > frames[i-1] && frames[i] > frames[i+1]) peaks++;
+              }
+              const calculatedBpm = Math.min(Math.max(peaks * 12, 60), 120);
+              appState.pulseRate = calculatedBpm;
+              document.getElementById('ekgBpm').innerText = calculatedBpm;
+            }
+          }
+        }, 100);
+
+      } catch (err) {
+        status.innerText = "Camera access error or light unavailable.";
+      }
+    }
+
+    // --- SECTION 4: STRESS ASSESSMENT ---
+    function renderStressQuestions() {
+      const emojis = ['😫', '😟', '😐', '🙂', '😌'];
+      for (let q = 1; q <= 5; q++) {
+        const container = document.querySelector(`#q${q} .emoji-rating`);
+        container.innerHTML = emojis.map((e, idx) => `
+          <button class="emoji-btn ${appState.stressScores[q-1] === (idx+1) ? 'selected' : ''}" 
+                  onclick="setStressScore(${q-1}, ${idx+1})">${e}</button>
+        `).join('');
+      }
+    }
+
+    function setStressScore(qIndex, value) {
+      appState.stressScores[qIndex] = value;
+      renderStressQuestions();
+    }
+
+    // --- SECTION 5: HEALTH CALCULATIONS & AI ---
+    function calculateOverallHealth() {
+      // 1. Dietary Calorie Balance Score (20%)
+      const dayMenu = menuData[appState.dayOfMonth] || menuData[1];
+      let eatenKcal = 0;
+      for (let key in dayMenu) {
+        if (appState.meals[key]) eatenKcal += dayMenu[key];
+      }
+      appState.addedSnacks.forEach(s => eatenKcal += s.kcal);
+      
+      const idealKcal = 2200;
+      const dietDiff = Math.abs(eatenKcal - idealKcal);
+      const dietScore = Math.max(0, 100 - (dietDiff / 15));
+
+      // 2. BMI Score (20%)
+      const bmi = calculateBMI();
+      let bmiScore = 100 - (Math.abs(bmi - 21.5) * 8);
+      bmiScore = Math.max(0, Math.min(100, bmiScore));
+
+      // 3. Hydration Score (15%)
+      const hydrationScore = Math.min(100, (appState.glassesDrunk / 8) * 100);
+
+      // 4. Pulse Rate Score (10%)
+      const pulse = appState.pulseRate;
+      let pulseScore = 100 - (Math.abs(pulse - 70) * 2);
+      pulseScore = Math.max(0, Math.min(100, pulseScore));
+
+      // 5. Stair Activity Score (20%)
+      let totalStairKcal = 0;
+      let totalClimbs = 0;
+      const allStairs = [...testedStairsData, ...genericStairsData];
+      allStairs.forEach(s => {
+        const count = appState.stairCounts[s.id] || 0;
+        totalClimbs += count;
+        totalStairKcal += count * s.energyKcal;
+      });
+      const stairScore = Math.min(100, totalClimbs * 10);
+
+      // 6. Stress Level Score (15%)
+      const avgStress = appState.stressScores.reduce((a,b) => a+b, 0) / 5;
+      const stressScore = (avgStress / 5) * 100;
+
+      // Final Weighted Score calculation
+      const finalScore = Math.round(
+        (dietScore * 0.20) +
+        (bmiScore * 0.20) +
+        (hydrationScore * 0.15) +
+        (pulseScore * 0.10) +
+        (stairScore * 0.20) +
+        (stressScore * 0.15)
+      );
+
+      // Update UI elements
+      document.getElementById('scoreCircle').style.setProperty('--score', finalScore);
+      document.getElementById('scoreValue').innerText = finalScore;
+      document.getElementById('ovDiet').innerText = `${eatenKcal} kcal`;
+      document.getElementById('ovBMI').innerText = `${bmi}`;
+      document.getElementById('ovHydration').innerText = `${appState.glassesDrunk * 250} / 2000 ml`;
+      document.getElementById('ovBurned').innerText = `${totalStairKcal.toFixed(2)} kcal`;
+      document.getElementById('ovStress').innerText = `${avgStress.toFixed(1)} / 5`;
+    }
+
+    async function generateAIRecommendations() {
+      const apiKey = document.getElementById('apiKeyInput').value.trim();
+      const output = document.getElementById('recommendationsOutput');
+
+      if (!apiKey) {
+        output.innerText = "Please enter your Gemini API Key in the top header input box to receive live AI advice.";
+        return;
+      }
+
+      output.innerText = "Generating live personalized health recommendations via Gemini AI...";
+
+      const nickname = document.getElementById('nickname').value || "Student";
+      const gender = document.getElementById('gender').value;
+      const bmi = document.getElementById('bmiDisplay').innerText;
+      const avgStress = (appState.stressScores.reduce((a,b) => a+b, 0) / 5).toFixed(1);
+      const score = document.getElementById('scoreValue').innerText;
+
+      const prompt = `
+        You are an expert AI Health Coach for 18-year-old college students.
+        Generate personalized recommendations for ${nickname} (${gender}, BMI: ${bmi}, Overall Health Score: ${score}/100).
+        User Data:
+        - Daily Hydration: ${appState.glassesDrunk * 250} ml / 2000 ml
+        - Pulse Rate: ${appState.pulseRate} BPM
+        - Average Stress Score (1-5): ${avgStress}
+        
+        Requirements:
+        Keep advice short, sweet, and highly personalized. Specifically cover:
+        1. Healthy eating habits starting now.
+        2. Actionable stress management tailored to their stress rating.
+        3. Maintaining or obtaining a healthy BMI.
+        4. Improving cardiovascular fitness with appropriate stair/exercise intensity.
+      `;
+
+      try {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+        });
+        const data = await res.json();
+        output.innerText = data.candidates[0].content.parts[0].text;
+      } catch (err) {
+        output.innerText = "Failed to reach Gemini API. Please check your API Key and internet connection.";
+      }
+    }
+
+    // --- EKG CANVAS ANIMATION ---
+    function initEKGCanvas() {
+      const canvas = document.getElementById('ekgCanvas');
+      const ctx = canvas.getContext('2d');
+      let x = 0;
+
+      function resize() {
+        canvas.width = canvas.parentElement.clientWidth;
+        canvas.height = 120;
+      }
+      resize();
+      window.addEventListener('resize', resize);
+
+      function drawEKG() {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.strokeStyle = '#00ff66';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        
+        const midY = canvas.height / 2;
+        let y = midY;
+
+        // Simulated PQRST ECG waveform signal
+        const cycle = x % 100;
+        if (cycle > 40 && cycle < 45) y = midY - 10; // P Wave
+        else if (cycle >= 45 && cycle < 48) y = midY + 10; // Q Wave
+        else if (cycle >= 48 && cycle < 52) y = midY - 45; // R Wave
+        else if (cycle >= 52 && cycle < 55) y = midY + 20; // S Wave
+        else if (cycle >= 65 && cycle < 75) y = midY - 15; // T Wave
+
+        ctx.moveTo(x, midY);
+        ctx.lineTo(x + 1, y);
+        ctx.stroke();
+
+        x = (x + 2) % canvas.width;
+        requestAnimationFrame(drawEKG);
+      }
+      drawEKG();
+    }
+  </script>
+</body>
+</html>
